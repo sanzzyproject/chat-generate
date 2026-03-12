@@ -4,7 +4,7 @@
   "description": "Generate realistic fake chats for viral content",
   "scripts": {
     "dev": "tailwindcss -i ./src/input.css -o ./src/style.css --watch",
-    "build": "tailwindcss -i ./src/input.css -o ./src/style.css --minify"
+    "build": "mkdir -p dist && tailwindcss -i ./src/input.css -o ./dist/style.css --minify && cp src/index.html dist/ && cp -r assets dist/ 2>/dev/null || :"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.1"
