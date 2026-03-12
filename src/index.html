@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Fake Chat Generator Viral Studio</title>
+  <!-- Tailwind CSS (compiled) -->
+  <link href="style.css" rel="stylesheet">
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/interactjs@1.10.17/dist/interact.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+  <style>
+    /* Theme-specific styles (will be toggled by JS) */
+    .theme-whatsapp .chat-bubble.left {
+      @apply bg-green-100 text-gray-800;
+      border-radius: 12px 12px 12px 4px;
+    }
+    .theme-whatsapp .chat-bubble.right {
+      @apply bg-green-500 text-white;
+      border-radius: 12px 12px 4px 12px;
+    }
+    .theme-whatsapp .chat-header {
+      @apply bg-green-600 text-white;
+    }
+    .theme-whatsapp .message-status {
+      @apply text-xs text-gray-500;
+    }
+    .theme-whatsapp .double-tick::before {
+      content: "\f00c\f00c"; /* fontawesome double check */
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+      margin-right: 4px;
+    }
+    .theme-whatsapp .blue-tick::before {
+      content: "\f00c\f00c";
+      color: #34b7f1;
+      font-family: "Font Awesome 6 Free";
+      font-weight: 900;
+    }
+    /* Telegram */
+    .theme-telegram .chat-bubble.left {
+      @apply bg-blue-100 text-gray-800;
+      border-radius: 12px 12px 12px 4px;
+    }
+    .theme-telegram .chat-bubble.right {
+      @apply bg-blue-500 text-white;
+      border-radius: 12px 12px 4px 12px;
+    }
+    .theme-telegram .chat-header {
+      @apply bg-blue-500 text-white;
+    }
+    /* Instagram */
+    .theme-instagram .chat-bubble.left {
+      background: linear-gradient(135deg, #f09433, #d62976, #962fbf);
+      color: white;
+      border-radius: 20px 20px 20px 4px;
+    }
+    .theme-instagram .chat-bubble.right {
+      background: linear-gradient(135deg, #4f5bd5, #962fbf);
+      color: white;
+      border-radius: 20px 20px 4px 20px;
+    }
+    .theme-instagram .chat-header {
+      background: linear-gradient(135deg, #f09433, #d62976);
+      color: white;
+    }
+    /* Messenger */
+    .theme-messenger .chat-bubble.left {
+      @apply bg-gray-200 text-gray-800;
+      border-radius: 22px 22px 22px 4px;
+    }
+    .theme-messenger .chat-bubble.right {
+      @apply bg-blue-500 text-white;
+      border-radius: 22px 22px 4px 22px;
+    }
+    .theme-messenger .chat-header {
+      @apply bg-blue-600 text-white;
+    }
+    /* X (Twitter) DM */
+    .theme-twitter .chat-bubble {
+      @apply bg-gray-200 text-gray-800 dark:bg-gray-700 dark:text-white;
+      border-radius: 24px;
+    }
+    .theme-twitter .chat-bubble.right {
+      @apply bg-blue-400 text-white dark:bg-blue-500;
+    }
+    .theme-twitter .chat-header {
+      @apply bg-black text-white dark:bg-gray-900;
+    }
+
+    /* Dark mode adjustments (applied when dark class on html) */
+    .dark .theme-whatsapp .chat-bubble.left {
+      @apply bg-green-800 text-white;
+    }
+    .dark .theme-telegram .chat-bubble.left {
+      @apply bg-blue-800 text-white;
+    }
+    /* etc. – extend as needed */
+
+    /* Phone frame */
+    .phone-frame {
+      width: 100%;
+      max-width: 380px;
+      margin: 0 auto;
+      background: #000;
+      border-radius: 36px;
+      padding: 12px 8px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .phone-screen {
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      height: 700px;
+      display: flex;
+      flex-direction: column;
+    }
+    .dark .phone-screen {
+      background: #1e1e1e;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background-size: cover;
+      background-position: center;
+    }
+    /* Draggable messages */
+    .message-bubble {
+      cursor: grab;
+      transition: box-shadow 0.2s;
+    }
+    .message-bubble:active {
+      cursor: grabbing;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    /* Typing indicator */
+    .typing-indicator span {
+      animation: blink 1.4s infinite both;
+    }
+    .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes blink {
+      0% { opacity: 0.2; }
+      20% { opacity: 1; }
+      100% { opacity: 0.2; }
+    }
+    /* Modal overlay */
+    #editModal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    #editModal.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+  <div class="container mx-auto p-4 max-w-7xl">
+    <h1 class="text-3xl font-bold mb-6 text-center">✨ Fake Chat Generator Viral Studio ✨</h1>
+    
+    <!-- Main row -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- LEFT SIDEBAR -->
+      <aside class="lg:w-1/3 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-5 overflow-y-auto max-h-[800px]">
+        <h2 class="text-xl font-semibold mb-4"><i class="fa-solid fa-sliders"></i> Studio Controls</h2>
+        
+        <!-- Theme selector -->
+        <div class="mb-6">
+          <label class="block text-sm font-medium mb-2">Chat Theme</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button data-theme="whatsapp" class="theme-btn bg-green-100 dark:bg-green-900 p-2 rounded-lg hover:ring-2 ring-green-500">WhatsApp</button>
+            <button data-theme="telegram" class="theme-btn bg-blue-100 dark:bg-blue-900 p-2 rounded-lg hover:ring-2 ring-blue-500">Telegram</button>
+            <button data-theme="instagram" class="theme-btn bg-pink-100 dark:bg-pink-900 p-2 rounded-lg hover:ring-2 ring-pink-500">Instagram</button>
+            <button data-theme="messenger" class="theme-btn bg-blue-100 dark:bg-blue-900 p-2 rounded-lg hover:ring-2 ring-blue-500">Messenger</button>
+            <button data-theme="twitter" class="theme-btn bg-gray-100 dark:bg-gray-700 p-2 rounded-lg hover:ring-2 ring-gray-500">X (Twitter)</button>
+          </div>
+        </div>
+
+        <!-- Dark mode toggle -->
+        <div class="mb-6 flex items-center justify-between">
+          <span class="text-sm font-medium">Dark Mode</span>
+          <button id="darkToggle" class="w-12 h-6 bg-gray-300 dark:bg-gray-600 rounded-full p-1 flex items-center">
+            <div class="w-4 h-4 bg-white rounded-full transform transition-transform dark:translate-x-6"></div>
+          </button>
+        </div>
+
+        <!-- Message creator -->
+        <div class="mb-6 border-t pt-4">
+          <h3 class="font-medium mb-2"><i class="fa-regular fa-pen-to-square"></i> Create Message</h3>
+          <div class="space-y-2">
+            <input type="text" id="msgSender" placeholder="Sender name" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+            <textarea id="msgText" placeholder="Message text" rows="2" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600"></textarea>
+            <select id="msgSide" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+              <option value="left">Left (incoming)</option>
+              <option value="right">Right (outgoing)</option>
+            </select>
+            <input type="time" id="msgTime" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+            <label class="block text-sm">Avatar (optional)</label>
+            <input type="file" id="msgAvatar" accept="image/*" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600">
+            <button id="addMessageBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">➕ Add Message</button>
+          </div>
+        </div>
+
+        <!-- Viral story generator -->
+        <div class="mb-6 border-t pt-4">
+          <h3 class="font-medium mb-2"><i class="fa-regular fa-star"></i> Viral Story Generator</h3>
+          <select id="storyCategory" class="w-full p-2 border rounded dark:bg-gray-700 dark:border-gray-600 mb-2">
+            <option value="funny">😂 Funny Chat</option>
+            <option value="drama">💔 Relationship Drama</option>
+            <option value="prank">🤣 Prank Chat</option>
+            <option value="horror">👻 Horror Story</option>
+            <option value="scam">⚠️ Scam Warning</option>
+            <option value="motivational">💪 Motivational</option>
+          </select>
+          <button id="generateStoryBtn" class="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700">✨ Generate Story</button>
+        </div>
+
+        <!-- Viral templates -->
+        <div class="mb-6 border-t pt-4">
+          <h3 class="font-medium mb-2"><i class="fa-regular fa-copy"></i> Viral Templates</h3>
+          <div class="grid grid-cols-2 gap-2">
+            <button class="template-btn bg-orange-100 dark:bg-orange-900 p-2 rounded text-sm" data-template="cheating">💔 Caught Cheating</button>
+            <button class="template-btn bg-blue-100 dark:bg-blue-900 p-2 rounded text-sm" data-template="boss">👔 Boss Text</button>
+            <button class="template-btn bg-green-100 dark:bg-green-900 p-2 rounded text-sm" data-template="prank">🤡 Prank</button>
+            <button class="template-btn bg-red-100 dark:bg-red-900 p-2 rounded text-sm" data-template="scammer">📞 Scammer</button>
+            <button class="template-btn bg-pink-100 dark:bg-pink-900 p-2 rounded text-sm" data-template="confession">💌 Confession</button>
+          </div>
+        </div>
+
+        <!-- Export tools -->
+        <div class="mb-6 border-t pt-4">
+          <h3 class="font-medium mb-2"><i class="fa-regular fa-image"></i> Export</h3>
+          <div class="flex gap-2">
+            <button id="exportPNG" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">PNG</button>
+            <button id="exportJPG" class="flex-1 bg-green-600 text-white py-2 rounded-lg hover:bg-green-700">JPG</button>
+            <button id="exportStory" class="flex-1 bg-gradient-to-r from-pink-500 to-purple-600 text-white py-2 rounded-lg">Story</button>
+          </div>
+        </div>
+
+        <!-- Save / Load / Random -->
+        <div class="mb-6 border-t pt-4">
+          <div class="flex gap-2">
+            <button id="saveProject" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">💾 Save</button>
+            <button id="loadProject" class="flex-1 bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700">📂 Load</button>
+          </div>
+          <button id="randomChat" class="w-full mt-2 bg-yellow-600 text-white py-2 rounded-lg hover:bg-yellow-700">🎲 Random Viral Chat</button>
+        </div>
+
+        <!-- Message status (for WhatsApp) -->
+        <div class="mb-6 border-t pt-4" id="whatsappStatusPanel" style="display: none;">
+          <h3 class="font-medium mb-2">Message Status (WhatsApp)</h3>
+          <select id="messageStatusSelect" class="w-full p-2 border rounded dark:bg-gray-700">
+            <option value="sent">✓ Sent</option>
+            <option value="delivered">✓✓ Delivered</option>
+            <option value="read">✓✓ (blue) Read</option>
+          </select>
+        </div>
+
+        <!-- Online status toggles -->
+        <div class="border-t pt-4">
+          <h3 class="font-medium mb-2">Header Status</h3>
+          <div class="flex flex-wrap gap-2">
+            <button id="statusOnline" class="px-3 py-1 bg-green-200 dark:bg-green-800 rounded-full text-sm">Online</button>
+            <button id="statusTyping" class="px-3 py-1 bg-blue-200 dark:bg-blue-800 rounded-full text-sm">Typing...</button>
+            <button id="statusLastSeen" class="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full text-sm">Last seen recently</button>
+            <button id="statusRecording" class="px-3 py-1 bg-red-200 dark:bg-red-800 rounded-full text-sm">Recording</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- RIGHT SIDE: Phone preview -->
+      <section class="lg:w-2/3 flex justify-center">
+        <div class="phone-frame">
+          <div class="phone-screen" id="phoneScreen">
+            <!-- Chat header -->
+            <div id="chatHeader" class="chat-header bg-green-600 text-white p-3 flex items-center gap-3">
+              <img src="https://i.pravatar.cc/40?img=7" class="w-10 h-10 rounded-full" id="headerAvatar" alt="avatar">
+              <div class="flex-1">
+                <div class="font-semibold" id="headerName">Alex Morgan</div>
+                <div class="text-xs opacity-90" id="headerSubtext">online</div>
+              </div>
+              <div class="flex gap-4">
+                <i class="fa-solid fa-phone"></i>
+                <i class="fa-solid fa-video"></i>
+              </div>
+            </div>
+
+            <!-- Chat messages area -->
+            <div id="chatMessages" class="chat-messages" style="background-image: url(''); background-color: #e5ddd5;"></div>
+
+            <!-- Typing indicator (hidden by default) -->
+            <div id="typingIndicator" class="hidden p-3 flex items-center gap-1 text-gray-500">
+              <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+              <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+              <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+              <span class="ml-1 text-sm">typing...</span>
+            </div>
+
+            <!-- Fake input bar (just for looks) -->
+            <div class="p-3 border-t dark:border-gray-700 flex items-center gap-2 bg-white dark:bg-gray-800">
+              <i class="fa-regular fa-face-smile text-xl"></i>
+              <div class="flex-1 h-8 bg-gray-100 dark:bg-gray-700 rounded-full px-4 text-sm leading-8">Message</div>
+              <i class="fa-regular fa-paper-plane"></i>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Edit Message Modal -->
+  <div id="editModal">
+    <div class="bg-white dark:bg-gray-800 p-6 rounded-xl w-96 max-w-full">
+      <h3 class="text-xl font-bold mb-4">Edit Message</h3>
+      <input type="hidden" id="editMsgId">
+      <div class="space-y-3">
+        <input type="text" id="editSender" placeholder="Sender" class="w-full p-2 border rounded dark:bg-gray-700">
+        <textarea id="editText" placeholder="Message" rows="3" class="w-full p-2 border rounded dark:bg-gray-700"></textarea>
+        <select id="editSide" class="w-full p-2 border rounded dark:bg-gray-700">
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+        <input type="time" id="editTime" class="w-full p-2 border rounded dark:bg-gray-700">
+        <label>Avatar (URL or upload)</label>
+        <input type="file" id="editAvatar" accept="image/*" class="w-full p-2 border rounded dark:bg-gray-700">
+      </div>
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="closeModal" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
+        <button id="saveEdit" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
