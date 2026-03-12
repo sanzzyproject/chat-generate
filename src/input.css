@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom theme styles will be added via style blocks in HTML or can be placed here.
+   For clarity, we'll keep theme-specific styles inside a <style> tag in index.html. */
