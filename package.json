@@ -1,0 +1,12 @@
+{
+  "name": "fake-chat-generator-viral",
+  "version": "1.0.0",
+  "description": "Generate realistic fake chats for viral content",
+  "scripts": {
+    "dev": "tailwindcss -i ./src/input.css -o ./src/style.css --watch",
+    "build": "tailwindcss -i ./src/input.css -o ./src/style.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}
